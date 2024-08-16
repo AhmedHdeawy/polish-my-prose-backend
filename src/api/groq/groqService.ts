@@ -11,17 +11,20 @@ const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
 export class GroqService {
 
-  async polishText(content: string): Promise<ServiceResponse<GroqModel | null>> {
+  async polishText(content: string, lang: string): Promise<ServiceResponse<GroqModel | null>> {
     try {
 
-      const chatCompletion = await this.getGroqChatCompletion(content);
+      lang = this.languageMapper(lang);
+
+      const chatCompletion = await this.getGroqChatCompletion(content, lang);
       const generatedText = chatCompletion.choices[0]?.message?.content;
       if (generatedText) {
         const parsedResponse = this.parseGroqResponse(generatedText);
         if (parsedResponse) {
           return ServiceResponse.success<GroqModel>("Text polished", {
-            correct_content: parsedResponse.correct_content,
-            best_content: parsedResponse.best_content
+            original_version: content,
+            correct_version: parsedResponse.correct_version,
+            best_version: parsedResponse.best_version
           });
         }
       }
@@ -35,6 +38,21 @@ export class GroqService {
     }
   }
 
+  private languageMapper(lang: string): string {
+    switch (lang) {
+      case "en":
+        return "English";
+      case "es":
+        return "Spanish";
+      case "de":
+        return "German";
+      case "ar":
+        return "Arabic";
+      default:
+        return "English";
+    }
+  }
+
   private parseGroqResponse(response: string): ParsedGroqResponse | null {
 
     logger.info(`Response ${response}`);
@@ -42,8 +60,8 @@ export class GroqService {
     try {
       const parsedResponse = JSON.parse(response)
       return {
-        correct_content: parsedResponse.correct_content,
-        best_content: parsedResponse.best_content
+        correct_version: parsedResponse.correct_version,
+        best_version: parsedResponse.best_version
       }
     } catch (error) {
       logger.error(`Error parsing Groq response ${response} : ${(error as Error).message}`);
@@ -51,14 +69,14 @@ export class GroqService {
     }
   }
 
-  async getGroqChatCompletion(content: string) {
-    const instructions = "Improve the following English text by correcting any grammar or typos, and then provide a more polished and effective alternative version. and Please provide your response in JSON format, using the two keys 'correct_content' and 'best_content'. Ensure your response contains only the JSON, without any additional text or information or ```. The Text is: ";
+  async getGroqChatCompletion(content: string, lang: string = "en") {
+    const instructions = "Improve the following " + lang + " text by correcting any grammar or typos, and then provide a more polished and effective alternative version. and Please provide your response in JSON format, using the two keys 'correct_version' and 'best_version'. Ensure your response contains only the JSON, without any additional text or information or ```. The Text is: ";
 
     return groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "you are a English language expert.",
+          content: `you are a ${lang} language expert.`,
         },
         {
           role: "user",

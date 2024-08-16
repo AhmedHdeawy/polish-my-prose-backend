@@ -4,9 +4,10 @@ import { groqService } from "@/api/groq/groqService";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 
 class GroqController {
-    public polishText: RequestHandler = async (req: Request, res: Response) => {
+  public polishText: RequestHandler = async (req: Request, res: Response) => {
     const content = req.body.content;
-    const serviceResponse = await groqService.polishText(content);
+    const lang = req.body.lang;
+    const serviceResponse = await groqService.polishText(content, lang);
     return handleServiceResponse(serviceResponse, res);
   };
 }
