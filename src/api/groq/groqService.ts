@@ -52,7 +52,7 @@ export class GroqService {
   }
 
   async getGroqChatCompletion(content: string) {
-    const instructions = "Improve the following English text by correcting any grammar or typos, and then provide a more polished and effective alternative version. and Please provide your response in JSON format, using the two keys 'correct_content' and 'best_content'. Ensure your response contains only the JSON, without any additional text or information. The Text is: ";
+    const instructions = "Improve the following English text by correcting any grammar or typos, and then provide a more polished and effective alternative version. and Please provide your response in JSON format, using the two keys 'correct_content' and 'best_content'. Ensure your response contains only the JSON, without any additional text or information or ```. The Text is: ";
 
     return groq.chat.completions.create({
       messages: [
@@ -65,7 +65,8 @@ export class GroqService {
           content: instructions + content,
         },
       ],
-      model: "llama3-8b-8192",
+      // model: "llama-3.1-70b-versatile",
+      model: "gemma2-9b-it",
     });
   }
 }
