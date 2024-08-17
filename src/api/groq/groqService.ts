@@ -13,15 +13,13 @@ export class GroqService {
 
   async polishText(content: string, lang: string): Promise<ServiceResponse<GroqModel | null>> {
     try {
-
-      lang = this.languageMapper(lang);
-
       const chatCompletion = await this.getGroqChatCompletion(content, lang);
       const generatedText = chatCompletion.choices[0]?.message?.content;
       if (generatedText) {
         const parsedResponse = this.parseGroqResponse(generatedText);
         if (parsedResponse) {
           return ServiceResponse.success<GroqModel>("Text polished", {
+            lang,
             original_version: content,
             correct_version: parsedResponse.correct_version,
             best_version: parsedResponse.best_version
@@ -35,21 +33,6 @@ export class GroqService {
       const errorMessage = `Error polishing your content ${content}:, ${(ex as Error).message}`;
       logger.error(errorMessage);
       return ServiceResponse.failure("An error occurred while polishing your content.", null, StatusCodes.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private languageMapper(lang: string): string {
-    switch (lang) {
-      case "en":
-        return "English";
-      case "es":
-        return "Spanish";
-      case "de":
-        return "German";
-      case "ar":
-        return "Arabic";
-      default:
-        return "English";
     }
   }
 
@@ -70,13 +53,26 @@ export class GroqService {
   }
 
   async getGroqChatCompletion(content: string, lang: string = "en") {
-    const instructions = "Improve the following " + lang + " text by correcting any grammar or typos, and then provide a more polished and effective alternative version. and Please provide your response in JSON format, using the two keys 'correct_version' and 'best_version'. Ensure your response contains only the JSON, without any additional text or information or ```. The Text is: ";
+    const instructions = "Improve the following " + lang + " text by correcting any grammar or typos, and then provide a more polished and effective alternative version. The Text is: ";
+    // const instructions = "Improve the following " + lang + " text by correcting any grammar or typos, and then provide a more polished and effective alternative version. and Please provide your response in JSON format, using the two keys 'correct_version' and 'best_version'. Ensure your response contains only the JSON, without any additional text or information or ```. The Text is: ";
 
     return groq.chat.completions.create({
       messages: [
         {
           role: "system",
           content: `you are a ${lang} language expert.`,
+        },
+        {
+          role: "system",
+          content: `Please provide your response in JSON format and this JSON must contains two keys 'correct_version' and 'best_version' ONLY.`,
+        },
+        {
+          role: "system",
+          content: "Ensure your response contains only the JSON, without any additional text or information or symbols",
+        },
+        {
+          role: "system",
+          content: "Please Don't return sth like ``` or json word before the json format. just send the json format that must start with { and end with }",
         },
         {
           role: "user",
