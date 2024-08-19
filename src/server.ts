@@ -11,6 +11,7 @@ import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { groqRouter } from "./api/groq/groqRouter";
+import verifyToken from "./common/middleware/verifyToken";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: '*' }));
 app.use(helmet());
 app.use(rateLimiter);
+app.use(verifyToken);
 
 // Request logging
 app.use(requestLogger);
