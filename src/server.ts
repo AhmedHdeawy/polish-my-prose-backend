@@ -3,15 +3,14 @@ import express, { type Express } from "express";
 import helmet from "helmet";
 import { pino } from "pino";
 
-import { openAPIRouter } from "@/api-docs/openAPIRouter";
 import { healthCheckRouter } from "@/api/healthCheck/healthCheckRouter";
-import { userRouter } from "@/api/user/userRouter";
 import errorHandler from "@/common/middleware/errorHandler";
 import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
-import { env } from "@/common/utils/envConfig";
 import { groqRouter } from "./api/groq/groqRouter";
 import verifyToken from "./common/middleware/verifyToken";
+import { ServiceResponse } from "./common/models/serviceResponse";
+import { handleServiceResponse } from "./common/utils/httpHandlers";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
@@ -25,18 +24,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: '*' }));
 app.use(helmet());
 app.use(rateLimiter);
-app.use(verifyToken);
 
 // Request logging
 app.use(requestLogger);
 
 // Routes
 app.use("/health-check", healthCheckRouter);
-app.use("/users", userRouter);
-app.use("/groq", groqRouter);
+app.use("/groq", verifyToken, groqRouter);
 
-// Swagger UI
-app.use(openAPIRouter);
+
+app.use('/', (req, res) => {
+    return handleServiceResponse(ServiceResponse.success("Welcome to the Polish My Prose Backend", null), res);
+});
 
 // Error handlers
 app.use(errorHandler());

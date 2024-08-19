@@ -13,7 +13,8 @@
     }
   ],
   "cSpell.words": [
-    "groq"
+    "groq",
+    "pino"
   ],
   "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
